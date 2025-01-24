@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NOBLE GAMES - Hafıza Oyunu</title>
+    <style>
+        /* Mevcut stiller... */
+        
+        /* Yeni stil eklemeleri */
+        .game-stats {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 18px;
+            z-index: 100;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            position: absolute;
+            animation: confetti-fall 3s linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+
+        .record-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #2C3E50, #3498db);
+            color: white;
+            font-size: 16px; /* İsimler için font boyutu */
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-stats">
+        Süre: <span id="timer">60</span><br>
+        En İyi Süre: <span id="best-time">-</span>
+    </div>
+    <div class="memory-game"></div>
+    <div id="result"></div>
+    <div class="record-message" id="record-message"></div>
+
+    <script>
+        // Mevcut değişkenler ve fonksiyonlar...
+        let timeLeft = 60;
+        let bestTime = localStorage.getItem('memoryGameBestTime') || null;
+        let gameStarted = false;
+        let timer;
+
+        // Tüm isimler
+        const allNames = [
+            'Ali', 'Bahri', 'Şafak', 'Hamza', 
+            'Ege', 'İmran', 'Burak', 'Ercü', 
+            'Emir', 'Ömer', 'Çaça'
+        ];
+
+        // Rastgele 6 isim seç
+        function selectRandomNames() {
+            let shuffled = [...allNames].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, 6);
+        }
+
+        // Kartları oluştur
+        function createCards() {
+            const gameContainer = document.querySelector('.memory-game');
+            const selectedNames = selectRandomNames();
+            const cards = [];
+            
+            // Her isimden 2 kart oluştur
+            selectedNames.forEach(name => {
+                // İlk kart
+                const card1 = createCard(name);
+                cards.push(card1);
+                
+                // Eşleşen ikinci kart
+                const card2 = createCard(name);
+                cards.push(card2);
+            });
+
+            // Kartları karıştır
+            cards.sort(() => Math.random() - 0.5);
+            
+            // Kartları ekrana yerleştir
+            cards.forEach(card => gameContainer.appendChild(card));
+        }
+
+        function createCard(name) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const front = document.createElement('div');
+            front.className = 'card-front';
+            front.textContent = name;
+
+            const back = document.createElement('div');
+            back.className = 'card-back';
+            back.textContent = '?';
+
+            card.appendChild(front);
+            card.appendChild(back);
+            
+            card.addEventListener('click', flipCard);
+            card.dataset.name = name;
+            
+            return card;
+        }
+
+        function checkForMatch() {
+            const isMatch = firstCard.dataset.name === secondCard.dataset.name;
+            isMatch ? disableCards() : unflipCards();
+        }
+
+        // En iyi süreyi göster
+        function updateBestTimeDisplay() {
+            const bestTimeDisplay = document.getElementById('best-time');
+            bestTimeDisplay.textContent = bestTime ? `${60 - bestTime} saniye` : '-';
+        }
+
+        // Konfeti efekti
+        function createConfetti() {
+            for(let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        // Rekor mesajını göster
+        function showRecordMessage(message) {
+            const recordMessage = document.getElementById('record-message');
+            recordMessage.textContent = message;
+            recordMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                recordMessage.style.display = 'none';
+            }, 3000);
+        }
+
+        function startTimer() {
+            updateBestTimeDisplay();
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+                
+                if (timeLeft === 0) {
+                    clearInterval(timer);
+                    showResult(false);
+                }
+            }, 1000);
+        }
+
+        function showResult(won) {
+            clearInterval(timer);
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            
+            if (won) {
+                const timeSpent = 60 - timeLeft;
+                resultDiv.textContent = `Tebrikler! ${timeSpent} saniyede tamamladınız!`;
+                
+                // Rekor kontrolü
+                if (!bestTime || timeSpent < bestTime) {
+                    const isFirstGame = !bestTime;
+                    bestTime = timeSpent;
+                    localStorage.setItem('memoryGameBestTime', timeSpent);
+                    
+                    if (isFirstGame) {
+                        showRecordMessage(`İlk oyununuz! Rekorunuz: ${timeSpent} saniye`);
+                    } else {
+                        showRecordMessage(`Yeni Rekor! Eski rekorunuzu ${bestTime} saniye ile geçtiniz!`);
+                        createConfetti();
+                    }
+                }
+                updateBestTimeDisplay();
+            } else {
+                resultDiv.textContent = 'Süre Doldu! Tekrar Deneyin!';
+            }
+        }
+
+        // Oyunu sıfırla
+        function resetGame() {
+            timeLeft = 60;
+            document.getElementById('timer').textContent = timeLeft;
+            matches = 0;
+            gameStarted = false;
+            
+            // Kartları temizle ve yeniden oluştur
+            const gameContainer = document.querySelector('.memory-game');
+            gameContainer.innerHTML = '';
+            createCards();
+            
+            // Sonuç mesajını gizle
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('record-message').style.display = 'none';
+        }
+
+        // Oyunu başlat
+        createCards();
+        updateBestTimeDisplay();
+
+        // Sayfa yenilendiğinde oyunu sıfırla
+        window.onload = resetGame;
+    </script>
+</body>
+</html>
