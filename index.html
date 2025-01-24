@@ -9,6 +9,7 @@
             background-color: #87CEEB;
             font-family: 'Press Start 2P', cursive;
             overflow: hidden;
+            height: 100vh;
         }
 
         .cloud {
@@ -17,6 +18,33 @@
             border-radius: 20px;
             animation: float linear infinite;
             opacity: 0.8;
+            z-index: 1; /* Bulutları arkaya aldık */
+        }
+
+        /* Çimen stili */
+        .grass {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to bottom, #4CAF50, #45a049);
+            z-index: 2;
+        }
+
+        /* Çimen detayları */
+        .grass::after {
+            content: '';
+            position: absolute;
+            top: -20px;
+            width: 100%;
+            height: 20px;
+            background: repeating-linear-gradient(
+                45deg,
+                #4CAF50,
+                #4CAF50 10px,
+                #45a049 10px,
+                #45a049 20px
+            );
         }
 
         @keyframes float {
@@ -32,7 +60,7 @@
             color: #FFD700;
             font-size: 64px;
             text-shadow: 4px 4px 0px #FF6B6B;
-            z-index: 1;
+            z-index: 3; /* Başlığı en öne aldık */
             text-align: center;
         }
 
@@ -45,6 +73,7 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             padding: 20px;
+            z-index: 3; /* Oyun kutularını en öne aldık */
         }
 
         .game-box {
@@ -55,6 +84,7 @@
             cursor: pointer;
             transition: transform 0.3s;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            min-width: 200px;
         }
 
         .game-box:hover {
@@ -98,16 +128,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="grass"></div>
     <div class="title">NOBLE GAMES</div>
 
     <div class="game-container">
-        <div class="game-box" onclick="openGame('https://scratch.mit.edu/projects/editor/embed')">
-            <h2>Yılan Oyunu</h2>
-            <p>Klasik yılan oyununu oyna!</p>
+        <div class="game-box" onclick="openGame('memory-game.html')">
+            <h2>Hafıza Oyunu</h2>
+            <p>NOBLE SQUAD kartlarını eşleştir!</p>
         </div>
-        <div class="game-box" onclick="openGame('https://scratch.mit.edu/projects/editor/embed')">
-            <h2>Tetris</h2>
-            <p>Blokları yerleştir, sıraları tamamla!</p>
+        <div class="game-box" onclick="openGame('nbl-game.html')">
+            <h2>NBL Game</h2>
+            <p>NBL macerası başlıyor!</p>
         </div>
     </div>
 
@@ -123,7 +154,7 @@
             cloud.className = 'cloud';
             cloud.style.width = Math.random() * 100 + 50 + 'px';
             cloud.style.height = Math.random() * 30 + 20 + 'px';
-            cloud.style.top = Math.random() * 100 + '%';
+            cloud.style.top = Math.random() * 40 + '%'; // Bulutları üst kısımda tut
             cloud.style.animationDuration = Math.random() * 20 + 10 + 's';
             document.body.appendChild(cloud);
             
