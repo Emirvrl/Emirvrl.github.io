@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NOBLE GAMES</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #87CEEB;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 20px;
+            opacity: 0.8;
+            z-index: 1;
+            left: -150px;
+        }
+
+        .cloud-moving {
+            animation: moveCloud 15s linear infinite;
+        }
+
+        .dwarf-container {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            animation: dwarfWalk 8s linear infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform-style: preserve-3d;
+        }
+
+        .dwarf {
+            width: 100px;
+            height: 100px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50,15 C45,15 35,20 35,30 C35,35 45,45 50,45 C55,45 65,35 65,30 C65,20 55,15 50,15" fill="%23ffccaa"/><circle cx="43" cy="28" r="2.5" fill="%23000"/><circle cx="57" cy="28" r="2.5" fill="%23000"/><path d="M45,33 Q50,36 55,33" fill="none" stroke="%23000" stroke-width="1.5"/><path d="M35,45 L65,45 L65,75 L35,75 Z" fill="%23ff0000"/><path d="M40,75 L60,75 L55,95 L45,95 Z" fill="%23000066"/><path d="M30,45 L35,45 L35,75 L25,85 M70,45 L65,45 L65,75 L75,85" fill="none" stroke="%23ff0000" stroke-width="3"/><path d="M35,45 C25,20 75,20 65,45" fill="%23ff0000"/></svg>') no-repeat center;
+            animation: dwarfAnimation 0.8s steps(2) infinite;
+            transform: scaleX(-1) translateZ(1px);
+        }
+
+        .dwarf-name {
+            color: #FF0000;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 18px;
+            margin-top: 10px;
+            text-shadow: 2px 2px 2px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 10px;
+            transform: translateZ(1px);
+        }
+
+        .title {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #FFD700;
+            font-size: 64px;
+            text-shadow: 4px 4px 0px #FF6B6B;
+            z-index: 3;
+            text-align: center;
+            width: 90%;
+        }
+
+        .game-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            z-index: 3;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .game-box {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+
+        .game-box:hover {
+            transform: translateY(-5px);
+        }
+
+        .grass {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(to bottom, #4CAF50, #45a049);
+            z-index: 2;
+        }
+
+        .scrolling-text-container {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            overflow: hidden;
+            height: 40px;
+            z-index: 3;
+        }
+
+        .scrolling-text {
+            position: absolute;
+            white-space: nowrap;
+            font-family: 'Press Start 2P', cursive;
+            color: #FFD700;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            animation: scrollText 20s linear infinite;
+        }
+
+        #game-frame {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 90%;
+            background: white;
+            border-radius: 20px;
+            z-index: 100;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 101;
+        }
+
+        @keyframes moveCloud {
+            0% {
+                left: -150px;
+            }
+            100% {
+                left: calc(100% + 150px);
+            }
+        }
+
+        @keyframes dwarfWalk {
+            0% {
+                transform: translateX(-150px) scaleX(-1);
+            }
+            45% {
+                transform: translateX(150px) scaleX(-1);
+            }
+            50% {
+                transform: translateX(150px) scaleX(1);
+            }
+            95% {
+                transform: translateX(-150px) scaleX(1);
+            }
+            100% {
+                transform: translateX(-150px) scaleX(-1);
+            }
+        }
+
+        @keyframes dwarfAnimation {
+            0% {
+                transform: translateY(0px);
+            }
+            25% {
+                transform: translateY(-3px);
+            }
+            50% {
+                transform: translateY(0px);
+            }
+            75% {
+                transform: translateY(-3px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        @keyframes scrollText {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .title {
+                font-size: 36px;
+                top: 15%;
+            }
+
+            .game-container {
+                top: 55%;
+            }
+
+            .scrolling-text {
+                font-size: 18px;
+            }
+
+            .dwarf {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .dwarf-name {
+                font-size: 14px;
+            }
+
+            @keyframes dwarfWalk {
+                0% {
+                    transform: translateX(-100px) scaleX(-1);
+                }
+                45% {
+                    transform: translateX(100px) scaleX(-1);
+                }
+                50% {
+                    transform: translateX(100px) scaleX(1);
+                }
+                95% {
+                    transform: translateX(-100px) scaleX(1);
+                }
+                100% {
+                    transform: translateX(-100px) scaleX(-1);
+                }
+            }
+        }
+
+        @media screen and (max-height: 500px) and (orientation: landscape) {
+            .title {
+                font-size: 24px;
+                top: 20%;
+            }
+
+            .game-container {
+                grid-template-columns: repeat(2, 1fr);
+                top: 60%;
+            }
+
+            .grass {
+                height: 40px;
+            }
+
+            .game-box {
+                padding: 10px;
+            }
+        }
+
+        .online-panel {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 200px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            z-index: 10;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            overflow-y: auto;
+        }
+
+        .online-users, .offline-users {
+            margin-bottom: 20px;
+        }
+
+        .user-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .user-list li {
+            padding: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-list li::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .online-users .user-list li::before {
+            background: #2ecc71;
+        }
+
+        .offline-users .user-list li::before {
+            background: #e74c3c;
+        }
+
+        .login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-form {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .login-form input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 200px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+        }
+
+        .login-form button {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">NOBLE GAMES</div>
+
+    <div class="game-container">
+        <div class="game-box" onclick="openGame('memory-game.html')">
+            <h2>Hafıza Oyunu</h2>
+            <p>NOBLE SQUAD kartlarını eşleştir!</p>
+        </div>
+    </div>
+
+    <div class="dwarf-container">
+        <div class="dwarf"></div>
+        <div class="dwarf-name">Ali</div>
+    </div>
+
+    <div class="scrolling-text-container">
+        <div class="scrolling-text">
+            Tüm Noble Squad Üyelerine Sevgilerle... ⭐ Ali, Bahri, Şafak, Hamza, Ege, İmran, Burak, Ercü, Emir, Ömer, Çaça ⭐
+        </div>
+    </div>
+
+    <div class="grass"></div>
+
+    <div id="game-frame">
+        <button class="close-button" onclick="closeGame()">Kapat</button>
+        <iframe id="game" width="100%" height="100%" frameborder="0"></iframe>
+    </div>
+
+    <div class="online-panel">
+        <div class="online-users">
+            <h3>Çevrimiçi</h3>
+            <ul class="user-list" id="onlineList"></ul>
+        </div>
+        <div class="offline-users">
+            <h3>Çevrimdışı</h3>
+            <ul class="user-list" id="offlineList"></ul>
+        </div>
+    </div>
+
+    <div class="login-modal" id="loginModal">
+        <div class="login-form">
+            <h2>Kullanıcı Adı</h2>
+            <input type="text" id="usernameInput" placeholder="Kullanıcı adınız...">
+            <button onclick="login()">Giriş</button>
+        </div>
+    </div>
+
+    <script>
+        function createCloud() {
+            const cloud = document.createElement('div');
+            cloud.className = 'cloud';
+            
+            const width = Math.random() * 100 + 50;
+            cloud.style.width = width + 'px';
+            cloud.style.height = (width * 0.6) + 'px';
+            
+            cloud.style.top = Math.random() * 40 + '%';
+            
+            const duration = Math.random() * 10 + 15;
+            cloud.style.animationDuration = duration + 's';
+
+            document.body.appendChild(cloud);
+            
+            requestAnimationFrame(() => {
+                cloud.classList.add('cloud-moving');
+            });
+
+            cloud.addEventListener('animationend', () => {
+                cloud.remove();
+            });
+        }
+
+        for(let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                createCloud();
+            }, i * 1000);
+        }
+
+        setInterval(createCloud, 3000);
+
+        function openGame(url) {
+            document.getElementById('game-frame').style.display = 'block';
+            document.getElementById('game').src = url;
+        }
+
+        function closeGame() {
+            document.getElementById('game-frame').style.display = 'none';
+            document.getElementById('game').src = '';
+        }
+
+        // Firebase yapılandırması
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhyFQwFWxgJHQXGZk7k4LNVZ_LKtWKZKE",
+            authDomain: "noble-games-db.firebaseapp.com",
+            databaseURL: "https://noble-games-db-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "noble-games-db",
+            storageBucket: "noble-games-db.appspot.com",
+            messagingSenderId: "1015629374760",
+            appId: "1:1015629374760:web:5d5c6a4f9f5c5c5f5c5c5c"
+        };
+
+        // Firebase'i başlat
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let currentUser = null;
+
+        // Cihaz ID'si oluştur veya al
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('deviceId');
+            if (!deviceId) {
+                deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('deviceId', deviceId);
+            }
+            return deviceId;
+        }
+
+        // Sayfa yüklendiğinde kontrol et
+        window.onload = function() {
+            const deviceId = getDeviceId();
+            const savedUsername = localStorage.getItem('username');
+            
+            // Kayıtlı kullanıcı varsa direkt giriş yap
+            if (savedUsername) {
+                loginUser(savedUsername, true);
+            } else {
+                // Kayıtlı kullanıcı yoksa modal göster
+                document.getElementById('loginModal').style.display = 'flex';
+            }
+
+            // Enter tuşu desteği
+            document.getElementById('usernameInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+        };
+
+        function login() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (username) {
+                loginUser(username, false);
+            } else {
+                alert('Lütfen bir kullanıcı adı girin!');
+            }
+        }
+
+        function loginUser(username, isAutoLogin) {
+            currentUser = username;
+            const deviceId = getDeviceId();
+            
+            // Kullanıcı bilgilerini kaydet
+            localStorage.setItem('username', username);
+            
+            // Kullanıcıyı veritabanına kaydet ve online yap
+            const userRef = db.ref('users/' + username);
+            userRef.set({
+                online: true,
+                deviceId: deviceId,
+                lastSeen: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // Çıkış durumunda offline yap
+            userRef.onDisconnect().update({
+                online: false,
+                lastSeen: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // Cihaz-kullanıcı eşleşmesini kaydet
+            db.ref('devices/' + deviceId).set({
+                username: username,
+                lastLogin: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // Modal'ı kapat (eğer otomatik giriş değilse)
+            if (!isAutoLogin) {
+                document.getElementById('loginModal').style.display = 'none';
+            }
+
+            console.log('Giriş yapıldı:', username);
+        }
+
+        // Kullanıcı listesini güncelle
+        function updateUserLists(users) {
+            const onlineList = document.getElementById('onlineList');
+            const offlineList = document.getElementById('offlineList');
+            
+            onlineList.innerHTML = '';
+            offlineList.innerHTML = '';
+
+            Object.entries(users || {}).forEach(([username, data]) => {
+                const li = document.createElement('li');
+                li.textContent = username;
+                
+                // Mevcut kullanıcıyı işaretle
+                if (username === currentUser) {
+                    li.style.fontWeight = 'bold';
+                    li.textContent += ' (Sen)';
+                }
+                
+                if (data.online) {
+                    onlineList.appendChild(li);
+                } else {
+                    offlineList.appendChild(li);
+                }
+            });
+        }
+
+        // Kullanıcı değişikliklerini dinle
+        db.ref('users').on('value', (snapshot) => {
+            const users = snapshot.val();
+            updateUserLists(users);
+        });
+
+        // Sayfadan ayrılırken kullanıcıyı offline yap
+        window.onbeforeunload = function() {
+            if (currentUser) {
+                const userRef = db.ref('users/' + currentUser);
+                userRef.update({
+                    online: false,
+                    lastSeen: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+        };
+    </script>
+</body>
+</html> 
