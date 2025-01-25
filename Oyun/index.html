@@ -34,13 +34,12 @@
             position: fixed;
             bottom: 80px;
             left: 50%;
-            transform: translateX(-50%);
+            transform-style: preserve-3d;
             z-index: 3;
             animation: dwarfWalk 8s linear infinite;
             display: flex;
             flex-direction: column;
             align-items: center;
-            transform-style: preserve-3d;
         }
 
         .dwarf {
@@ -61,6 +60,9 @@
             padding: 5px 10px;
             border-radius: 10px;
             transform: translateZ(1px);
+            position: absolute;
+            top: -30px;
+            white-space: nowrap;
         }
 
         .title {
@@ -169,19 +171,19 @@
 
         @keyframes dwarfWalk {
             0% {
-                transform: translateX(-150px) scaleX(-1);
+                transform: translateX(-150px);
             }
             45% {
-                transform: translateX(150px) scaleX(-1);
+                transform: translateX(150px);
             }
             50% {
-                transform: translateX(150px) scaleX(1);
+                transform: translateX(150px);
             }
             95% {
-                transform: translateX(-150px) scaleX(1);
+                transform: translateX(-150px);
             }
             100% {
-                transform: translateX(-150px) scaleX(-1);
+                transform: translateX(-150px);
             }
         }
 
@@ -237,19 +239,19 @@
 
             @keyframes dwarfWalk {
                 0% {
-                    transform: translateX(-100px) scaleX(-1);
+                    transform: translateX(-100px);
                 }
                 45% {
-                    transform: translateX(100px) scaleX(-1);
+                    transform: translateX(100px);
                 }
                 50% {
-                    transform: translateX(100px) scaleX(1);
+                    transform: translateX(100px);
                 }
                 95% {
-                    transform: translateX(-100px) scaleX(1);
+                    transform: translateX(-100px);
                 }
                 100% {
-                    transform: translateX(-100px) scaleX(-1);
+                    transform: translateX(-100px);
                 }
             }
         }
