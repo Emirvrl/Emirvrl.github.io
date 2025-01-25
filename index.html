@@ -467,12 +467,30 @@
         const db = firebase.database();
         let currentUser = null;
 
-        // Sayfa yüklendiğinde giriş modalını göster
+        // Cihaz ID'si oluştur veya al
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('deviceId');
+            if (!deviceId) {
+                deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('deviceId', deviceId);
+            }
+            return deviceId;
+        }
+
+        // Sayfa yüklendiğinde kontrol et
         window.onload = function() {
-            const loginModal = document.getElementById('loginModal');
-            loginModal.style.display = 'flex';
+            const deviceId = getDeviceId();
+            const savedUsername = localStorage.getItem('username');
             
-            // Enter tuşuna basıldığında giriş yap
+            // Kayıtlı kullanıcı varsa direkt giriş yap
+            if (savedUsername) {
+                loginUser(savedUsername, true);
+            } else {
+                // Kayıtlı kullanıcı yoksa modal göster
+                document.getElementById('loginModal').style.display = 'flex';
+            }
+
+            // Enter tuşu desteği
             document.getElementById('usernameInput').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     login();
@@ -483,29 +501,45 @@
         function login() {
             const username = document.getElementById('usernameInput').value.trim();
             if (username) {
-                currentUser = username;
-                
-                // Kullanıcıyı online olarak işaretle
-                const userRef = db.ref('users/' + username);
-                userRef.set({
-                    online: true,
-                    lastSeen: firebase.database.ServerValue.TIMESTAMP
-                });
-
-                // Kullanıcı çıkış yaptığında offline olarak işaretle
-                userRef.onDisconnect().update({
-                    online: false,
-                    lastSeen: firebase.database.ServerValue.TIMESTAMP
-                });
-
-                // Modalı kapat
-                document.getElementById('loginModal').style.display = 'none';
-
-                // Kullanıcı girişi yapıldığını göster
-                console.log('Giriş yapıldı:', username);
+                loginUser(username, false);
             } else {
                 alert('Lütfen bir kullanıcı adı girin!');
             }
+        }
+
+        function loginUser(username, isAutoLogin) {
+            currentUser = username;
+            const deviceId = getDeviceId();
+            
+            // Kullanıcı bilgilerini kaydet
+            localStorage.setItem('username', username);
+            
+            // Kullanıcıyı veritabanına kaydet ve online yap
+            const userRef = db.ref('users/' + username);
+            userRef.set({
+                online: true,
+                deviceId: deviceId,
+                lastSeen: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // Çıkış durumunda offline yap
+            userRef.onDisconnect().update({
+                online: false,
+                lastSeen: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // Cihaz-kullanıcı eşleşmesini kaydet
+            db.ref('devices/' + deviceId).set({
+                username: username,
+                lastLogin: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // Modal'ı kapat (eğer otomatik giriş değilse)
+            if (!isAutoLogin) {
+                document.getElementById('loginModal').style.display = 'none';
+            }
+
+            console.log('Giriş yapıldı:', username);
         }
 
         // Kullanıcı listesini güncelle
@@ -519,6 +553,12 @@
             Object.entries(users || {}).forEach(([username, data]) => {
                 const li = document.createElement('li');
                 li.textContent = username;
+                
+                // Mevcut kullanıcıyı işaretle
+                if (username === currentUser) {
+                    li.style.fontWeight = 'bold';
+                    li.textContent += ' (Sen)';
+                }
                 
                 if (data.online) {
                     onlineList.appendChild(li);
