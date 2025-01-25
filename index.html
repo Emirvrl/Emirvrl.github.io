@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NOBLE GAMES</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body {
             margin: 0;
@@ -451,19 +453,37 @@
 
         // Firebase yapılandırması
         const firebaseConfig = {
-            // Firebase config bilgileriniz
+            apiKey: "AIzaSyDhyFQwFWxgJHQXGZk7k4LNVZ_LKtWKZKE",
+            authDomain: "noble-games-db.firebaseapp.com",
+            databaseURL: "https://noble-games-db-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "noble-games-db",
+            storageBucket: "noble-games-db.appspot.com",
+            messagingSenderId: "1015629374760",
+            appId: "1:1015629374760:web:5d5c6a4f9f5c5c5f5c5c5c"
         };
 
-        // Firebase başlatma
+        // Firebase'i başlat
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         let currentUser = null;
+
+        // Sayfa yüklendiğinde giriş modalını göster
+        window.onload = function() {
+            const loginModal = document.getElementById('loginModal');
+            loginModal.style.display = 'flex';
+            
+            // Enter tuşuna basıldığında giriş yap
+            document.getElementById('usernameInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+        };
 
         function login() {
             const username = document.getElementById('usernameInput').value.trim();
             if (username) {
                 currentUser = username;
-                document.getElementById('loginModal').style.display = 'none';
                 
                 // Kullanıcıyı online olarak işaretle
                 const userRef = db.ref('users/' + username);
@@ -477,6 +497,14 @@
                     online: false,
                     lastSeen: firebase.database.ServerValue.TIMESTAMP
                 });
+
+                // Modalı kapat
+                document.getElementById('loginModal').style.display = 'none';
+
+                // Kullanıcı girişi yapıldığını göster
+                console.log('Giriş yapıldı:', username);
+            } else {
+                alert('Lütfen bir kullanıcı adı girin!');
             }
         }
 
@@ -488,7 +516,7 @@
             onlineList.innerHTML = '';
             offlineList.innerHTML = '';
 
-            Object.entries(users).forEach(([username, data]) => {
+            Object.entries(users || {}).forEach(([username, data]) => {
                 const li = document.createElement('li');
                 li.textContent = username;
                 
@@ -502,9 +530,20 @@
 
         // Kullanıcı değişikliklerini dinle
         db.ref('users').on('value', (snapshot) => {
-            const users = snapshot.val() || {};
+            const users = snapshot.val();
             updateUserLists(users);
         });
+
+        // Sayfadan ayrılırken kullanıcıyı offline yap
+        window.onbeforeunload = function() {
+            if (currentUser) {
+                const userRef = db.ref('users/' + currentUser);
+                userRef.update({
+                    online: false,
+                    lastSeen: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+        };
     </script>
 </body>
 </html> 
