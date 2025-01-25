@@ -402,9 +402,46 @@
             font-family: 'Press Start 2P', cursive;
             margin-top: 10px;
         }
+
+        .welcome-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: welcomeFade 0.5s ease-in-out;
+        }
+
+        @keyframes welcomeFade {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .welcome-message {
+                font-size: 12px;
+                padding: 10px 15px;
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="welcome-message">
+        Herkese Merhaba!
+    </div>
+
     <div class="title">NOBLE GAMES</div>
 
     <div class="game-container">
