@@ -51,18 +51,19 @@
         }
 
         .dwarf-name {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(2px);
             color: #FF0000;
             font-family: 'Press Start 2P', cursive;
             font-size: 18px;
-            margin-top: 10px;
+            white-space: nowrap;
             text-shadow: 2px 2px 2px rgba(0,0,0,0.3);
             background: rgba(255, 255, 255, 0.8);
             padding: 5px 10px;
             border-radius: 10px;
-            transform: translateZ(1px);
-            position: absolute;
-            top: -30px;
-            white-space: nowrap;
+            pointer-events: none;
         }
 
         .title {
@@ -278,17 +279,57 @@
 
         .online-panel {
             position: fixed;
-            left: 0;
-            top: 0;
-            width: 200px;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 250px;
+            background: linear-gradient(135deg, #87CEEB, #4A90E2);
             color: white;
             padding: 20px;
             z-index: 10;
             font-family: 'Press Start 2P', cursive;
             font-size: 12px;
-            overflow-y: auto;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .cloud-border {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: white;
+            border-radius: 50%;
+            filter: blur(50px);
+            opacity: 0.3;
+            animation: cloudMove 10s infinite linear;
+        }
+
+        .cloud-border:nth-child(1) { top: -150px; left: -150px; }
+        .cloud-border:nth-child(2) { top: -150px; right: -150px; }
+        .cloud-border:nth-child(3) { bottom: -150px; left: -150px; }
+        .cloud-border:nth-child(4) { bottom: -150px; right: -150px; }
+
+        .airplane {
+            position: absolute;
+            left: -30px;
+            top: 50%;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2L2,22h20L12,2z" fill="%23ffffff"/></svg>') no-repeat center;
+            transform: rotate(90deg);
+            animation: flyPlane 3s infinite ease-in-out;
+        }
+
+        @keyframes cloudMove {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes flyPlane {
+            0% { transform: rotate(90deg) translateY(-10px); }
+            50% { transform: rotate(90deg) translateY(10px); }
+            100% { transform: rotate(90deg) translateY(-10px); }
         }
 
         .online-users, .offline-users {
@@ -392,6 +433,11 @@
     </div>
 
     <div class="online-panel">
+        <div class="cloud-border"></div>
+        <div class="cloud-border"></div>
+        <div class="cloud-border"></div>
+        <div class="cloud-border"></div>
+        <div class="airplane"></div>
         <div class="online-users">
             <h3>Çevrimiçi</h3>
             <ul class="user-list" id="onlineList"></ul>
